@@ -1,2 +1,2 @@
 require('dotenv').config();
-require('./bot/index');
+const bot = require("./bot/index");

@@ -1,29 +1,22 @@
-const { getCryptoPrice } = require('./cryptoService');
-const db = require('../db/fakeDB');
-const { coinMap } = require('../config/coinMap');
+const { getPrice } = require('./binanceService');
+const userStore = require('../db/userStore');
 
-const lastPrices = {};
+const monitorPrices = async (bot) => {
+  const allUsers = userStore.getAll();
 
-function monitorPrices(bot) {
-  setInterval(async () => {
-    for (const userId in db.users) {
-      for (const symbol of db.users[userId]) {
-        const coinId = coinMap[symbol];
-        const price = await getCryptoPrice(coinId);
-
-        if (!lastPrices[symbol]) {
-          lastPrices[symbol] = price;
-          continue;
-        }
-
-        const diff = ((price - lastPrices[symbol]) / lastPrices[symbol]) * 100;
-        if (Math.abs(diff) >= 5) {
-          bot.sendMessage(userId, `🚨 ${symbol} змінився на ${diff.toFixed(2)}%! Ціна: $${price}`);
-          lastPrices[symbol] = price;
-        }
+  for (const [chatId, symbols] of Object.entries(allUsers)) {
+    for (const symbol of symbols) {
+      const price = await getPrice(symbol);
+      if (price) {
+        bot.sendMessage(chatId, `🔔 Update for ${symbol}: $${price}`);
       }
     }
-  }, 60_000); // кожну хвилину
-}
+  }
+};
 
-module.exports = { monitorPrices };
+const startMonitoring = (bot) => {
+  monitorPrices(bot);
+  setInterval(() => monitorPrices(bot), 120000); // Кожні 2 хвилини
+};
+
+module.exports = { startMonitoring };

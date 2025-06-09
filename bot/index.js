@@ -1,38 +1,141 @@
 const TelegramBot = require('node-telegram-bot-api');
-const { getCryptoPrice } = require('../services/cryptoService');
-const { coinMap } = require('../config/coinMap');
-const db = require('../db/fakeDB');
-const { monitorPrices } = require('../services/monitorService');
+const messages = require('./messages');
+const {
+  setUserLang,
+  getUserLang,
+  setUserCoin,
+  getUserCoin,
+  getAll
+} = require('../db/userStore');
+const { getPrice: getBinancePrice } = require('../services/binanceService');
+const axios = require('axios');
 
-const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
+const token = process.env.TELEGRAM_TOKEN;
+const bot = new TelegramBot(token, { polling: true });
 
-// Команда старт
+const coins = ['BTC', 'ETH', 'XRP', 'SOL', 'DOGE'];
+
+const { getPrice } = require('../services/binanceService');
+
+
+// Клавіатура для вибору мови
+function getLangKeyboard() {
+  return {
+    reply_markup: {
+      keyboard: [
+        ['Українська 🇺🇦', 'Беларуская 🇧🇾'],
+        ['Русский 🇷🇺', 'English 🇬🇧']
+      ],
+      resize_keyboard: true,
+      one_time_keyboard: true,
+    }
+  };
+}
+
+// Головне меню
+function getMainMenu(lang) {
+  const labels = {
+    uk: ['🪙 Вибрати монету', '💰 Ціна монети', '🌐 Мова', 'ℹ️ Допомога'],
+    ru: ['🪙 Выбрать монету', '💰 Цена монеты', '🌐 Язык', 'ℹ️ Помощь'],
+    en: ['🪙 Choose coin', '💰 Coin price', '🌐 Language', 'ℹ️ Help'],
+    by: ['🪙 Выбраць манету', '💰 Цана манеты', '🌐 Мова', 'ℹ️ Дапамога'],
+  };
+  return {
+    reply_markup: {
+      keyboard: [
+        [labels[lang][0], labels[lang][1]],
+        [labels[lang][2], labels[lang][3]],
+      ],
+      resize_keyboard: true,
+      one_time_keyboard: false,
+    }
+  };
+}
+
+// --- /start
 bot.onText(/\/start/, (msg) => {
-  bot.sendMessage(msg.chat.id, '👋 Привіт! Введи /add BTC, щоб слідкувати за біткоїном.');
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, messages['en'].chooseLang, getLangKeyboard());
 });
 
-// Додати монету
-bot.onText(/\/add (.+)/, (msg, match) => {
-  const userId = msg.chat.id;
-  const symbol = match[1].toUpperCase();
+// --- Обробка повідомлень
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text;
 
-  if (!coinMap[symbol]) {
-    return bot.sendMessage(userId, `🚫 Не знаю такої монети: ${symbol}`);
+  // Вибір мови
+  if (['Українська 🇺🇦', 'Беларуская 🇧🇾', 'Русский 🇷🇺', 'English 🇬🇧'].includes(text)) {
+    let lang = 'en';
+    if (text.includes('Українська')) lang = 'uk';
+    else if (text.includes('Беларуская')) lang = 'by';
+    else if (text.includes('Русский')) lang = 'ru';
+    else if (text.includes('English')) lang = 'en';
+
+    setUserLang(chatId, lang);
+    return bot.sendMessage(chatId, messages[lang].description, getMainMenu(lang));
   }
 
-  db.addToWatchlist(userId, symbol);
-  bot.sendMessage(userId, `✅ Тепер слідкуємо за ${symbol}`);
+  const lang = getUserLang(chatId);
+
+  const labels = {
+    chooseCoin: {
+      uk: '🪙 Вибрати монету', ru: '🪙 Выбрать монету',
+      en: '🪙 Choose coin', by: '🪙 Выбраць манету'
+    },
+    coinPrice: {
+      uk: '💰 Ціна монети', ru: '💰 Цена монеты',
+      en: '💰 Coin price', by: '💰 Цана манеты'
+    },
+    language: {
+      uk: '🌐 Мова', ru: '🌐 Язык',
+      en: '🌐 Language', by: '🌐 Мова'
+    },
+    help: {
+      uk: 'ℹ️ Допомога', ru: 'ℹ️ Помощь',
+      en: 'ℹ️ Help', by: 'ℹ️ Дапамога'
+    }
+  };
+
+  // Обробка команд
+  if (text === labels.chooseCoin[lang]) {
+    const coinButtons = coins.map(c => [{ text: c }]);
+    return bot.sendMessage(chatId, messages[lang].selectCoin, {
+      reply_markup: {
+        keyboard: coinButtons,
+        one_time_keyboard: true,
+        resize_keyboard: true,
+      },
+    });
+  }
+
+  if (coins.includes(text)) {
+    setUserCoin(chatId, text);
+    return bot.sendMessage(chatId, messages[lang].coinAdded(text), getMainMenu(lang));
+  }
+
+  if (text === labels.coinPrice[lang]) {
+    const coin = getUserCoin(chatId);
+    if (!coin) return bot.sendMessage(chatId, messages[lang].selectCoin);
+
+    const price = await getPrice(coin);
+    if (!price) return bot.sendMessage(chatId, "Price info not available. Try later.");
+
+    return bot.sendMessage(chatId, messages[lang].currentPrice(coin, price.toFixed(2)), getMainMenu(lang));
+  }
+
+  if (text === labels.language[lang]) {
+    return bot.sendMessage(chatId, messages[lang].chooseLang, getLangKeyboard());
+  }
+
+  if (text === labels.help[lang]) {
+    return bot.sendMessage(chatId, messages[lang].help, getMainMenu(lang));
+  }
+
+  return bot.sendMessage(chatId, messages[lang].description, getMainMenu(lang));
 });
 
-// Тест команди /price
-bot.onText(/\/price (.+)/, async (msg, match) => {
-  const symbol = match[1].toUpperCase();
-  const coinId = coinMap[symbol];
-  if (!coinId) return bot.sendMessage(msg.chat.id, '🚫 Невідомий символ.');
+// 🔁 Запускаємо періодичний моніторинг Binance
+const { startMonitoring } = require('../services/monitorService');
+startMonitoring(bot);
 
-  const price = await getCryptoPrice(coinId);
-  bot.sendMessage(msg.chat.id, `💰 ${symbol} зараз $${price}`);
-});
-
-// Старт моніторингу
-monitorPrices(bot);
+console.log('Bot started');
