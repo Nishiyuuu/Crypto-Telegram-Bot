@@ -45,5 +45,3 @@ coverage/
 # Telegraf session files (якщо колись збережеш в файл)
 sessions.json
 
-# check telegram id
-checkIDTelegram.js
