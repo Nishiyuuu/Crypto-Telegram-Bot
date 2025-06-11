@@ -8,7 +8,7 @@ module.exports = async(ctx) => {
 
         let user = await user.findOne({ userId });
         if(!user){
-            user = new user({
+            user = new User({
                 userId,
                 language: userLanguage,
                 isVIP: false,
