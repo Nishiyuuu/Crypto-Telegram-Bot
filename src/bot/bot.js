@@ -2,6 +2,7 @@ const { Telegraf, session, Scenes } = require('telegraf');
 const { BOT_TOKEN } = require('../config/env');
 const logger = require('../utils/logger');
 const User = require('../db/models/user');
+const { handlePriceCommand } = require('./commands/price');
 
 // --- Text translations (hardcoded for now, will be from language.json) ---
 const texts = {
@@ -41,6 +42,34 @@ const texts = {
             "ua": "❓ Допомога",
             "ru": "❓ Помощь"
         }
+    },
+    "price_enter_symbol": {
+        "en": "Please enter the coin symbol (e.g., BTC):",
+        "ua": "Будь ласка, введіть символ монети (наприклад, BTC):",
+        "ru": "Пожалуйста, введите символ монеты (например, BTC):"
+        // Додайте "by" якщо ви підтримуєте білоруську
+    },
+    "price_response": { // <--- ПЕРЕВІРТЕ ЦЕЙ КЛЮЧ
+        "en": "Price of {symbol}: {price}",
+        "ua": "Ціна {symbol}: {price}",
+        "ru": "Цена {symbol}: {price}"
+        // Додайте "by" якщо ви підтримуєте білоруську
+    },
+    "price_not_found": {
+        "en": "Could not find price for {symbol}. Please check the symbol.",
+        "ua": "Не вдалося знайти ціну для {symbol}. Будь ласка, перевірте символ.",
+        "ru": "Не удалось найти цену для {symbol}. Пожалуйста, проверьте символ."
+        // Додайте "by" якщо ви підтримуєте білоруську
+    },
+    "general_error": { // Додамо загальний текст для помилок
+        "en": "An unexpected error occurred. Please try again later.",
+        "ua": "Виникла неочікувана помилка. Будь ласка, спробуйте пізніше.",
+        "ru": "Произошла непредвиденная ошибка. Пожалуйста, попробуйте позже."
+    },
+    "invalid_input": { // Додамо текст для невірного вводу
+        "en": "Invalid input. Please enter a valid coin symbol.",
+        "ua": "Невірний ввід. Будь ласка, введіть дійсний символ монети.",
+        "ru": "Неверный ввод. Пожалуйста, введите действительный символ монеты."
     }
 };
 
@@ -195,6 +224,49 @@ bot.action(/^lang_([a-z]{2})$/, async (ctx) => {
     } catch (error) {
         logger.error(`Unhandled error in language action for user ${userId}:`, error);
         await ctx.reply('An error occurred while setting your language. Please try again.');
+    }
+});
+
+bot.command('price', handlePriceCommand); // <--- ЦЕЙ РЯДОК!
+
+// Обробник для кнопки "💰 Ціна" у головному меню
+// Цей обробник перехоплює натискання на кнопку з текстом "💰 Ціна" (в будь-якій мові)
+bot.hears((text, ctx) => {
+    const priceButtonTexts = Object.values(texts.menu_buttons.price);
+    const userText = text.trim(); 
+    return priceButtonTexts.some(btnText => btnText.trim() === userText);
+}, async (ctx) => { 
+    ctx.session.awaitingCoinSymbol = true; 
+    await ctx.reply(ctx.i18n('price_enter_symbol')); 
+    logger.info(`User ${ctx.from.id} is now awaiting coin symbol input.`);
+});
+
+bot.on('text', async (ctx) => {
+    const userId = ctx.from.id;
+    // Перевіряємо, чи бот очікує введення символу монети від цього користувача
+    if (ctx.session.awaitingCoinSymbol) {
+        const symbol = ctx.message.text.trim().toUpperCase();
+        
+        // Додамо просту валідацію: чи складається символ тільки з літер
+        if (!/^[A-Z]+$/.test(symbol)) {
+            await ctx.reply(ctx.i18n('invalid_input'));
+            // Ми не скидаємо стан awaitingCoinSymbol тут, щоб користувач міг ввести символ знову.
+            return;
+        }
+
+        // Скидаємо стан очікування, оскільки символ отримано
+        ctx.session.awaitingCoinSymbol = false; 
+        logger.info(`User ${userId} entered symbol: ${symbol}. Awaiting state cleared.`);
+
+        // ВИКЛИКАЄМО handlePriceCommand, ПЕРЕДАЮЧИ ctx І СИМВОЛ ОКРЕМО
+        await handlePriceCommand(ctx, symbol); // <--- ВАЖЛИВА ЗМІНА ТУТ!
+
+    } else {
+        // Якщо це просто будь-яке інше текстове повідомлення, яке не є командою
+        // і бот нічого не очікує, можна просто відповісти або проігнорувати.
+        // За замовчуванням Telegraf просто ігнорує, що є ОК.
+        // Якщо ви хочете обробити невідомі команди, це місце для цього:
+        // await ctx.reply(ctx.i18n('unknown_command')); 
     }
 });
 
