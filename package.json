@@ -1,32 +1,26 @@
 {
-  "name": "crypto-trend-bot",
+  "name": "crypto-telegram-bot",
   "version": "1.0.0",
-  "description": "Telegram bot для моніторингу криптовалютних трендів з багатомовною підтримкою",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/crypto-trend-bot.git"
+    "url": "git+https://github.com/Nishiyuuu/Crypto-Telegram-Bot.git"
   },
-  "keywords": [
-    "telegram",
-    "crypto",
-    "bot",
-    "coincap",
-    "multilanguage"
-  ],
-  "author": "Your Name",
-  "license": "MIT",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Nishiyuuu/Crypto-Telegram-Bot/issues"
+  },
+  "homepage": "https://github.com/Nishiyuuu/Crypto-Telegram-Bot#readme",
+  "description": "",
   "dependencies": {
-    "axios": "^1.4.0",
-    "dotenv": "^16.0.0",
-    "mongoose": "^7.0.0",
-    "node-telegram-bot-api": "^0.60.0"
-  },
-  "devDependencies": {
-    "nodemon": "^2.0.22"
+    "binance-api-node": "^0.12.9",
+    "dotenv": "^17.0.1",
+    "mongoose": "^8.16.1",
+    "node-telegram-bot-api": "^0.66.0"
   }
 }
