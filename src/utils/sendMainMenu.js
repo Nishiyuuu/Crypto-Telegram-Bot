@@ -5,7 +5,8 @@ function sendMainMenu(bot, chatId, lang) {
     [{ text: t(lang, 'check_price'), callback_data: 'menu:price' }],
     [{ text: t(lang, 'monitoring'),  callback_data: 'menu:monitor' }],
     [{ text: t(lang, 'settings'),    callback_data: 'menu:settings' }],
-    [{ text: t(lang, 'help'),        callback_data: 'menu:help' }]
+    [{ text: t(lang, 'help'),        callback_data: 'menu:help' }],
+    [{ text: '⚠️ Disclaimer', callback_data: 'menu:disclaimer' }]
   ];
 
   return bot.sendMessage(chatId, t(lang, 'main_menu'), {

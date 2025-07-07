@@ -2,6 +2,9 @@ const User = require('../models/User');
 const t    = require('../translate');
 const sendMainMenu = require('../utils/sendMainMenu');
 
+// Зберігаємо активні обробники для кожного користувача
+const activeHandlers = new Map();
+
 module.exports = (bot) => {
   bot.on('callback_query', async (query) => {
     const chatId = query.message.chat.id;
@@ -35,18 +38,17 @@ module.exports = (bot) => {
       return sendMainMenu(bot, chatId, user.language);
     }
 
-    // Перенаправлення на встановлення інтервалу/порогу/крону – ці хендлери вже є
+    // Перенаправлення на встановлення інтервалу/порогу
     if (query.data === 'settings:set_interval') {
-      // Викликаємо той же setIntervalHandler, що і в monitoring.js
       const maxInterval = user.status === 'vip' ? 60 : 600;
       await bot.sendMessage(chatId, t(user.language, 'enter_interval').replace('{max}', maxInterval));
-      return bot.once('message', setIntervalHandler(bot, chatId, maxInterval * 1000));
+      return setIntervalHandler(bot, chatId, maxInterval * 1000);
     }
 
     if (query.data === 'settings:set_threshold') {
       const maxThreshold = user.status === 'vip' ? 5 : 10;
       await bot.sendMessage(chatId, t(user.language, 'enter_threshold').replace('{max}', maxThreshold));
-      return bot.once('message', setThresholdHandler(bot, chatId, maxThreshold));
+      return setThresholdHandler(bot, chatId, maxThreshold);
     }
 
     // Придбати VIP
@@ -54,10 +56,67 @@ module.exports = (bot) => {
       await bot.sendMessage(chatId, t(user.language, 'contact_admin'));
       return sendMainMenu(bot, chatId, user.language);
     }
-
-    // Назад
-    /*if (query.data === 'menu:main') {
-      return sendMainMenu(bot, chatId, user.language);
-    }*/
   });
 };
+
+function setIntervalHandler(bot, chatId, maxInterval) {
+  // Видаляємо попередній обробник для цього користувача
+  if (activeHandlers.has(chatId)) {
+    bot.removeListener('message', activeHandlers.get(chatId));
+  }
+  
+  const handler = async (msg) => {
+    // Перевіряємо, що повідомлення від того ж користувача
+    if (msg.chat.id !== chatId) return;
+    
+    // Видаляємо обробник після використання
+    bot.removeListener('message', handler);
+    activeHandlers.delete(chatId);
+    
+    const user = await User.findOne({ telegramId: chatId });
+    let sec = parseInt(msg.text, 10);
+    sec = isNaN(sec) || sec < 1 ? 1 : sec;
+    const ms = Math.min(sec * 1000, maxInterval);
+    user.monitorInterval = ms;
+    await user.save();
+    await bot.sendMessage(
+      chatId,
+      t(user.language, 'interval_set').replace('{sec}', ms/1000)
+    );
+    return sendMainMenu(bot, chatId, user.language);
+  };
+  
+  activeHandlers.set(chatId, handler);
+  bot.on('message', handler);
+}
+
+function setThresholdHandler(bot, chatId, maxThreshold) {
+  // Видаляємо попередній обробник для цього користувача
+  if (activeHandlers.has(chatId)) {
+    bot.removeListener('message', activeHandlers.get(chatId));
+  }
+  
+  const handler = async (msg) => {
+    // Перевіряємо, що повідомлення від того ж користувача
+    if (msg.chat.id !== chatId) return;
+    
+    // Видаляємо обробник після використання
+    bot.removeListener('message', handler);
+    activeHandlers.delete(chatId);
+    
+    const user = await User.findOne({ telegramId: chatId });
+    let pct = parseFloat(msg.text);
+    pct = isNaN(pct) || pct < 0.1 ? 0.1 : pct;
+    pct = Math.min(pct, maxThreshold);
+    user.monitorThreshold = pct;
+    await user.save();
+    await bot.sendMessage(
+      chatId,
+      t(user.language, 'threshold_set').replace('{pct}', pct)
+    );
+    return sendMainMenu(bot, chatId, user.language);
+  };
+  
+  activeHandlers.set(chatId, handler);
+  bot.on('message', handler);
+}

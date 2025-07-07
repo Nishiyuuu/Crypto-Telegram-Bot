@@ -4,6 +4,9 @@ const sendMainMenu = require('../utils/sendMainMenu');
 const Binance = require('binance-api-node').default;
 const client = Binance();
 
+// Зберігаємо активні обробники для кожного користувача
+const activeHandlers = new Map();
+
 module.exports = (bot) => {
   bot.on('callback_query', async (query) => {
     const chatId = query.message.chat.id;
@@ -12,7 +15,7 @@ module.exports = (bot) => {
     if (query.data === 'menu:monitor') {
       if (!user.coins || user.coins.length === 0) {
         await bot.sendMessage(chatId, t(user.language, 'enter_coins'));
-        return bot.once('message', addCoinsHandler(bot, chatId));
+        return addCoinsHandler(bot, chatId);
       }
       const keyboard = [
         [{ text: t(user.language, 'set_interval'), callback_data: 'monitor:set_interval' }],
@@ -33,7 +36,7 @@ module.exports = (bot) => {
         chatId,
         t(user.language, 'enter_interval').replace('{max}', maxInterval/1000)
       );
-      return bot.once('message', setIntervalHandler(bot, chatId, maxInterval));
+      return setIntervalHandler(bot, chatId, maxInterval);
     }
 
     if (query.data === 'monitor:set_threshold') {
@@ -42,19 +45,15 @@ module.exports = (bot) => {
         chatId,
         t(user.language, 'enter_threshold').replace('{max}', maxThreshold)
       );
-      return bot.once('message', setThresholdHandler(bot, chatId, maxThreshold));
+      return setThresholdHandler(bot, chatId, maxThreshold);
     }
 
     if (query.data === 'monitor:edit') {
       user.coins = [];
       await user.save();
       await bot.sendMessage(chatId, t(user.language, 'enter_coins'));
-      return bot.once('message', addCoinsHandler(bot, chatId));
+      return addCoinsHandler(bot, chatId);
     }
-
-    /*if (query.data === 'menu:main') {
-      return sendMainMenu(bot, chatId, user.language);
-    }*/
   });
 };
 
@@ -74,15 +73,29 @@ async function validateSymbols(symbols) {
 }
 
 function addCoinsHandler(bot, chatId) {
-  return async (msg) => {
+  // Видаляємо попередній обробник для цього користувача
+  if (activeHandlers.has(chatId)) {
+    bot.removeListener('message', activeHandlers.get(chatId));
+  }
+  
+  const handler = async (msg) => {
+    // Перевіряємо, що повідомлення від того ж користувача
+    if (msg.chat.id !== chatId) return;
+    
+    // Видаляємо обробник після використання
+    bot.removeListener('message', handler);
+    activeHandlers.delete(chatId);
+    
     const user = await User.findOne({ telegramId: chatId });
-    const input = msg.text.split(/\s*,\s*/).map(c => c.toUpperCase());
+    const input = msg.text.split(/\s*,\s*/).map(c => c.toUpperCase().trim()).filter(c => c);
     const maxCoins = user.status === 'vip' ? 5 : 2;
     const { valid, invalid } = await validateSymbols(input);
+    
     if (valid.length === 0) {
       await bot.sendMessage(chatId, t(user.language, 'no_valid_coins')); 
       return sendMainMenu(bot, chatId, user.language);
     }
+    
     user.coins = valid.slice(0, maxCoins);
     await user.save();
     let response = t(user.language, 'monitoring_set') + user.coins.join(', ');
@@ -92,10 +105,25 @@ function addCoinsHandler(bot, chatId) {
     await bot.sendMessage(chatId, response);
     return sendMainMenu(bot, chatId, user.language);
   };
+  
+  activeHandlers.set(chatId, handler);
+  bot.on('message', handler);
 }
 
 function setIntervalHandler(bot, chatId, maxInterval) {
-  return async (msg) => {
+  // Видаляємо попередній обробник для цього користувача
+  if (activeHandlers.has(chatId)) {
+    bot.removeListener('message', activeHandlers.get(chatId));
+  }
+  
+  const handler = async (msg) => {
+    // Перевіряємо, що повідомлення від того ж користувача
+    if (msg.chat.id !== chatId) return;
+    
+    // Видаляємо обробник після використання
+    bot.removeListener('message', handler);
+    activeHandlers.delete(chatId);
+    
     const user = await User.findOne({ telegramId: chatId });
     let sec = parseInt(msg.text, 10);
     sec = isNaN(sec) || sec < 1 ? 1 : sec;
@@ -108,10 +136,25 @@ function setIntervalHandler(bot, chatId, maxInterval) {
     );
     return sendMainMenu(bot, chatId, user.language);
   };
+  
+  activeHandlers.set(chatId, handler);
+  bot.on('message', handler);
 }
 
 function setThresholdHandler(bot, chatId, maxThreshold) {
-  return async (msg) => {
+  // Видаляємо попередній обробник для цього користувача
+  if (activeHandlers.has(chatId)) {
+    bot.removeListener('message', activeHandlers.get(chatId));
+  }
+  
+  const handler = async (msg) => {
+    // Перевіряємо, що повідомлення від того ж користувача
+    if (msg.chat.id !== chatId) return;
+    
+    // Видаляємо обробник після використання
+    bot.removeListener('message', handler);
+    activeHandlers.delete(chatId);
+    
     const user = await User.findOne({ telegramId: chatId });
     let pct = parseFloat(msg.text);
     pct = isNaN(pct) || pct < 0.1 ? 0.1 : pct;
@@ -124,4 +167,7 @@ function setThresholdHandler(bot, chatId, maxThreshold) {
     );
     return sendMainMenu(bot, chatId, user.language);
   };
+  
+  activeHandlers.set(chatId, handler);
+  bot.on('message', handler);
 }

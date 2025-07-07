@@ -1,26 +1,55 @@
 {
   "name": "crypto-telegram-bot",
-  "version": "1.0.0",
-  "main": "index.js",
+  "version": "1.1.0",
+  "description": "Стабільний телеграм бот для моніторингу криптовалют",
+  "main": "src/bot.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/bot.js",
+    "worker": "node src/worker.js",
+    "dev": "nodemon src/bot.js",
+    "dev:worker": "nodemon src/worker.js",
+    "dev:both": "concurrently \"npm run dev\" \"npm run dev:worker\"",
+    "prod": "bash start.sh",
+    "stop": "bash stop.sh",
+    "reset": "node reset_telegram.js",
+    "fix-conflict": "npm run stop && npm run reset && npm run prod",
+    "test": "bash test.sh",
+    "logs": "tail -f logs/combined.log",
+    "logs:error": "tail -f logs/error.log"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Nishiyuuu/Crypto-Telegram-Bot.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "telegram",
+    "bot",
+    "crypto",
+    "cryptocurrency",
+    "binance",
+    "monitoring",
+    "price",
+    "alerts"
+  ],
+  "author": "Nishiyuu",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/Nishiyuuu/Crypto-Telegram-Bot/issues"
   },
   "homepage": "https://github.com/Nishiyuuu/Crypto-Telegram-Bot#readme",
-  "description": "",
   "dependencies": {
     "binance-api-node": "^0.12.9",
     "dotenv": "^17.0.1",
     "mongoose": "^8.16.1",
-    "node-telegram-bot-api": "^0.66.0"
+    "node-telegram-bot-api": "^0.66.0",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.10"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
   }
 }
