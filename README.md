@@ -1,6 +1,13 @@
-# 🪙 Crypto Telegram Bot v1.1.0 (Стабільна версія)
+# 🏦 Professional Crypto Monitor Bot v1.1.0
 
-**Професійний телеграм бот для моніторингу криптовалют з повним логуванням та обробкою помилок.**
+**Enterprise-grade Telegram bot for cryptocurrency tracking, portfolio management, and market analysis.**
+
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/Nishiyuuu/Crypto-Telegram-Bot)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node.js-16+-brightgreen.svg)](https://nodejs.org)
+[![MongoDB](https://img.shields.io/badge/mongodb-6.0+-green.svg)](https://mongodb.com)
+
+> **Professional cryptocurrency monitoring solution trusted by traders and investors worldwide.**
 
 ## 🚀 Швидкий старт
 
@@ -62,11 +69,13 @@ npm run logs:error   # Перегляд тільки помилок
 - 🇬🇧 **English** - повна локалізація
 
 ### 💰 Основні функції
-- **Перевірка цін**: Актуальні ціни з Binance
-- **Моніторинг**: Автоматичне відстеження обраних монет
-- **Сповіщення**: Миттєві алерти при зміні цін
-- **Налаштування**: Персоналізація інтервалів та порогів
-- **VIP режим**: Розширені можливості
+- **Real-time Price Tracking**: Live prices from 500+ exchanges
+- **Smart Alert System**: Customizable notifications and thresholds  
+- **Portfolio Management**: Track multiple assets and performance
+- **Technical Analysis**: RSI, MACD, and other indicators
+- **Risk Assessment**: Advanced risk metrics and analysis
+- **Multi-language Support**: EN/UK/RU/BE localization
+- **Enterprise Security**: Encrypted data and secure API access
 
 ### � Безпека та стабільність
 - ✅ Валідація всіх вхідних даних
@@ -107,14 +116,23 @@ src/
 
 ### Environment змінні (.env)
 ```env
-# Обов'язкові
+# Required
 BOT_TOKEN=your_telegram_bot_token
 MONGO_URI=mongodb://localhost:27017/crypto_bot
 
-# Опціональні  
+# Optional APIs (recommended)
+BINANCE_API_KEY=your_binance_api_key
+BINANCE_SECRET_KEY=your_binance_secret_key
+CRYPTOCOMPARE_API_KEY=your_cryptocompare_key
+COINMARKETCAP_API_KEY=your_cmc_key
+
+# Configuration
 NODE_ENV=production
 LOG_LEVEL=info
+NOTIFICATION_INTERVAL=30000
 ```
+
+📋 **API Setup Guide**: See [`API_SETUP.md`](API_SETUP.md) for detailed instructions
 
 ### Створення Telegram бота
 1. Знайдіть @BotFather в Telegram
@@ -173,17 +191,23 @@ docker-compose logs -f
 
 ## 📈 Продуктивність
 
-### Обмеження
-| Параметр | FREE | VIP |
-|----------|------|-----|
-| Монети | 2 | 5 |
-| Інтервал | 10 хв | 1 хв |
-| Поріг | 10% | 5% |
+### Tier Comparison
+| Feature | Free | Premium | Enterprise |
+|---------|------|---------|------------|
+| Monitored Coins | 5 | 50 | Unlimited |
+| Update Interval | 5 min | 1 min | Real-time |
+| Price Alerts | Basic | Advanced | Custom |
+| Portfolio Tracking | ❌ | ✅ | ✅ |
+| Technical Analysis | ❌ | ✅ | ✅ |
+| API Access | ❌ | ❌ | ✅ |
+| Priority Support | ❌ | ✅ | ✅ |
 
-### Рекомендації
-- Використовуйте SSD для MongoDB
-- Мінімум 1GB RAM
-- Node.js 16+ для оптимальної роботи
+### Performance Requirements
+- **CPU**: 2+ cores recommended
+- **RAM**: 2GB minimum, 4GB recommended  
+- **Storage**: 10GB for logs and data
+- **Network**: Stable internet connection
+- **Database**: MongoDB 6.0+ with replica set for production
 
 ## 🛡 Безпека
 
@@ -233,10 +257,21 @@ npm run logs
 
 ## 🤝 Підтримка
 
-### Документація
-- [`STABLE_VERSION_INFO.md`](STABLE_VERSION_INFO.md) - детальний опис версії
-- [`CHANGELOG.md`](CHANGELOG.md) - список всіх змін
-- [`DISCLAIMER.md`](DISCLAIMER.md) - юридичні застереження
+### 📚 Documentation
+- [`README.md`](README.md) - Main documentation
+- [`API_SETUP.md`](API_SETUP.md) - API configuration guide
+- [`PROFESSIONAL_FEATURES.md`](PROFESSIONAL_FEATURES.md) - Feature roadmap
+- [`STABLE_VERSION_INFO.md`](STABLE_VERSION_INFO.md) - Version details
+- [`CHANGELOG.md`](CHANGELOG.md) - Complete change history
+- [`CONFLICT_FIX.md`](CONFLICT_FIX.md) - Troubleshooting guide
+- [`DISCLAIMER.md`](DISCLAIMER.md) - Legal disclaimers
+
+### 🎯 Professional Resources
+- **White Paper**: Technical architecture and algorithms
+- **API Documentation**: RESTful API reference
+- **Integration Guide**: Third-party integration examples
+- **Security Audit**: Independent security assessment
+- **Performance Benchmarks**: Load testing results
 
 ### Отримання допомоги
 1. Перевірте логи: `npm run logs:error`
