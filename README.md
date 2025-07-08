@@ -298,10 +298,9 @@ npm run prod
 ## 🤝 Спільнота
 
 ### Підтримка
-- **Telegram**: [@YourSupportBot](https://t.me/YourSupportBot)
+- **Telegram**: [@Nishiyyu](https://t.me/Nishiyyu)
 - **GitHub**: [Issues](https://github.com/Nishiyuuu/Crypto-Telegram-Bot/issues)
-- **Discord**: [Приєднатися](https://discord.gg/your-server)
-- **Email**: support@cryptobot.ua
+- **Email**: bickovskijvlad53@gmail.com
 
 ### Внесок у проект
 1. Fork репозиторій
