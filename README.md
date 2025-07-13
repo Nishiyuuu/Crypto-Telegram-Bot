@@ -1,6 +1,6 @@
 # 🏦 Crypto Telegram Bot v1.0.3
 
-**Простий і надійний Telegram бот для моніторингу цін криптовалют!**
+**Простий і надійний Telegram бот для моніторингу цін криптовалют.**
 
 [![Версія](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/Nishiyuuu/Crypto-Telegram-Bot)
 [![Ліцензія](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
